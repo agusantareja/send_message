@@ -82,11 +82,10 @@ class SendEmail(models.Model):
                         log.create(message)
                         record.write({'is_send_email': True})
                         self._cr.commit()
-                        continue
+                        raise Exception("No email found for receiver %s" % record.receiver.name)
                 else:
-                    email_ex = record.email_ex
-                    if email_ex:
-                        template_values['email_to'] = email_ex
+                    if record.email_ex:
+                        template_values['email_to'] = record.email_ex
                 try:
                     mail_template = template.with_user(record.user_id).send_mail(
                         record.id_record,
@@ -95,15 +94,18 @@ class SendEmail(models.Model):
                     )
                     message["name"] = date_time
                     message["message"] = "Success to send email %s" % (mail_template)
+                    log.create(message)
+                    self._cr.commit()
                 except Exception as e:
                     message["name"] = date_time
                     message["message"] = "Something wrong when send email please check log"
                     _logger.error("Error sending email: %s", e)
                     record.write({'is_send_email': True})
+                    log.create(message)
                     self._cr.commit()
                     self.failed_send_mail_message(self.id, "email")
                     self.failed_send_wa_message("email")
-                log.create(message)
+                    raise e
 
     #function ini untuk send wa cron job
     def send_wa(self):
@@ -137,8 +139,8 @@ class SendEmail(models.Model):
                     self._cr.commit()
                     self.failed_send_mail_message(self.id, "wa")
                     self.failed_send_wa_message("wa")
-                    continue
-
+                    _logger.error("No recipient found for WhatsApp message: %s", record.name)
+                    raise Exception("No recipient found for WhatsApp message")
                 try:
                     response_content = self.post_wa_message(data)
                     if response_content['status'] == True:
@@ -154,6 +156,7 @@ class SendEmail(models.Model):
                     self._cr.commit()
                     self.failed_send_mail_message(self.id, "wa")
                     self.failed_send_wa_message("wa")
+                    raise e
 
     def post_wa_message(self, data_input):
         url = self.env['ir.config_parameter'].get_param('send_message_cron.api_send_wa')
