@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <data>
+  
+    <record id="send_message_log_view_tree" model="ir.ui.view">
+      <field name="name">Send Message View Tree</field>
+      <field name="model">send_message.log</field>
+      <field name="arch" type="xml">
+        <tree create="0" delete="0">
+          <field name="name" />
+          <field name="message" />
+        </tree>
+      </field>
+    </record>
+
+
+    <record id="send_message_log_view_form" model="ir.ui.view">
+      <field name="name">Send Message View Form</field>
+      <field name="model">send_message.log</field>
+      <field name="arch" type="xml">
+        <form create="0" delete="0" edit="0">
+          <sheet>
+            <group>
+              <field name="name" />
+              <field name="message" />
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="send_message_log_action" model="ir.actions.act_window">
+      <field name="name">Log Message</field>
+      <field name="res_model">send_message.log</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem name="Log Message" id="send_message_log_id" parent="base.menu_email"
+            action="send_message_log_action" sequence="93" groups="base.group_no_one"/>
+  
+  </data>
+  
+
+</odoo>

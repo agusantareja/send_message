@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <data>
+  
+    <record id="email_view_tree" model="ir.ui.view">
+      <field name="name">Email View Tree</field>
+      <field name="model">send_message.email</field>
+      <field name="arch" type="xml">
+        <tree create="0" delete="0">
+          <field name="id" />
+          <field name="receiver" />
+          <field name="is_send" />
+          <field name="is_send_wa" />
+          <field name="response" />
+        </tree>
+      </field>
+    </record>
+
+
+    <record id="email_log_view_form" model="ir.ui.view">
+      <field name="name">Email View Form</field>
+      <field name="model">send_message.email</field>
+      <field name="arch" type="xml">
+        <form create="0" delete="0" edit="0">
+          <header>
+            <button string="Send Wa" name="send_wa" type="object" class="oe_highlight"/>
+          </header>
+          <sheet>
+            <group>
+              <field name="id" />
+              <field name="receiver" />
+              <field name="receiver_ex" />
+              <field name="email_ex" />
+              <field name="contact_ex" />
+              <field name="template" />
+              <field name="id_record" />
+              <field name="is_send" />
+              <field name="model_record" />
+              <field name="message" />
+              <field name="ref" />
+              <field name="is_send_wa" />
+              <field name="response" />
+              <field name="company_id" />
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="email_log_action" model="ir.actions.act_window">
+      <field name="name">Message</field>
+      <field name="res_model">send_message.email</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem name="Data Message" id="email_message_log_id" parent="base.menu_email"
+            action="email_log_action" sequence="94" groups="base.group_no_one"/>
+  
+  </data>
+  
+
+</odoo>
