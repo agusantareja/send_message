@@ -47,8 +47,8 @@ class SendEmail(models.Model):
     @job
     def send_email_queue(self):
         parameter = self.env['ir.config_parameter'].get_param('send_message_cron.active_send_email_cron')
-        if parameter == 'True' and not self.is_send_email:
-            send = self # .env['send_message.email'].search([('is_send', '=', False)], limit=3)
+        if parameter == 'True':
+            send = self
             log = self.env['send_message.log']
             now = datetime.now(pytz.timezone('Asia/Jakarta'))
             date_time = now.strftime("%d/%m/%Y %H:%M:%S")
@@ -70,7 +70,7 @@ class SendEmail(models.Model):
                     'email_from': record.email_from or record.company_id.email or record.user_id.email,
                     'auto_delete': True
                 }
-                if test_email != 'False':
+                if test_email and test_email != 'False':
                     template_values['email_to'] = test_email
                 elif record.receiver:
                     email = record.receiver.partner_id.email
@@ -106,6 +106,14 @@ class SendEmail(models.Model):
                 log.create(message)
 
     #function ini untuk send wa cron job
+    def send_wa(self):
+        #jika paramater True maka function ini akan berjalan, jika False maka akan berhenti. setting paramater ini terdapat pada
+        #System Paramater
+        parameter = self.env['ir.config_parameter'].get_param('send_message_cron.active_send_wa_cron')
+        if parameter == 'True':
+            for rec in self.env['send_message.email'].search([('is_send', '=', False)]):
+                if not rec.is_send_wa:
+                    rec.with_delay().send_wa_queue()
     @job
     def send_wa_queue(self):
         parameter = self.env['ir.config_parameter'].get_param('send_message_cron.active_send_wa_cron')
@@ -114,11 +122,11 @@ class SendEmail(models.Model):
             test_wa = self.env['ir.config_parameter'].get_param('notif_wa_test')
             for record in data_send:
                 data = {
-                    'message': record.message,
-                    'ref': record.ref
+                    'message': record.message or "",
+                    'ref': record.ref or ""
                 }
                 no_wa = self.env['hr.employee'].search([('user_id', '=', record.receiver.id)], limit=1)
-                if test_wa != 'False':
+                if test_wa and test_wa != 'False':
                     data['recipient'] = test_wa
                 elif no_wa.mobile_phone:
                     data['recipient'] = no_wa.mobile_phone
@@ -139,7 +147,8 @@ class SendEmail(models.Model):
                         record.write({'response': 'failed'})
                     record.write({'is_send_wa': True})
                     self._cr.commit()
-                except Exception:
+                except Exception as e:
+                    _logger.error("Error sending WhatsApp message: %s", e)
                     record.write({'response': 'something wrong please check log'})
                     record.write({'is_send_wa': True})
                     self._cr.commit()
