@@ -60,7 +60,7 @@ class SendEmail(models.Model):
                 if not template:
                     message["name"] = date_time
                     message["message"] = "Something wrong when send email please check log"
-                    record.write({'is_send_mail': True})
+                    record.write({'is_send_email': True})
                     log.create(message)
                     self._cr.commit()
                     self.failed_send_mail_message(self.id, "email")
