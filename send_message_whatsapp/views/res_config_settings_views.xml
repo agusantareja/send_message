@@ -1,0 +1,25 @@
+<odoo>
+  <record id="view_config_settings_form_wa" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.wa</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <div id="settings" position="inside">
+        <div class="app_settings_block" title="WhatsApp Notification Settings">
+          <h2>WhatsApp Notification</h2>
+          <div class="row mt16 o_settings_container">
+            <div class="col-6">
+              <field name="send_message_whatsapp_using_queue"/>
+              <field name="send_message_whatsapp_notif_wa_size_cron_batch"/>
+              <field name="send_message_whatsapp_notif_wa_throttling"/>
+              <field name="send_message_whatsapp_active_send_wa_cron"/>
+              <field name="send_message_whatsapp_api_send_wa"/>
+              <field name="send_message_whatsapp_notif_wa_token"/>
+              <field name="send_message_whatsapp_notif_wa_test"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </field>
+  </record>
+</odoo>

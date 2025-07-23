@@ -1,0 +1,56 @@
+<odoo>
+  <record id="view_send_message_whatsapp_form" model="ir.ui.view">
+    <field name="name">send.message.whatsapp.form</field>
+    <field name="model">send_message.whatsapp</field>
+    <field name="arch" type="xml">
+      <form string="Send Message WhatsApp">
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="recipient"/>
+            <field name="message"/>
+            <field name="state"/>
+            <field name="user_id"/>
+            <field name="company_id"/>
+            <field name="response_txt"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_send_message_whatsapp_tree" model="ir.ui.view">
+    <field name="name">send.message.whatsapp.tree</field>
+    <field name="model">send_message.whatsapp</field>
+    <field name="arch" type="xml">
+      <tree string="Send Message WhatsApp">
+        <field name="name"/>
+        <field name="recipient"/>
+        <field name="message"/>
+        <field name="state"/>
+        <field name="user_id"/>
+        <field name="company_id"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_send_message_whatsapp" model="ir.actions.act_window">
+    <field name="name">Send WhatsApp Messages</field>
+    <field name="res_model">send_message.whatsapp</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">Create WhatsApp messages here.</p>
+    </field>
+  </record>
+
+<!--  <menuitem id="menu_send_message_whatsapp_root"-->
+<!--            name="WhatsApp"-->
+<!--            sequence="10"-->
+<!--            groups="base.group_user"/>-->
+
+<!--  <menuitem id="menu_send_message_whatsapp"-->
+<!--            name="Send Messages"-->
+<!--            parent="menu_send_message_whatsapp_root"-->
+<!--            action="action_send_message_whatsapp"-->
+<!--            sequence="20"/>-->
+</odoo>
