@@ -16,7 +16,7 @@
                             <field name="send_message_whatsapp_api_send_wa"/>
                             <field name="send_message_whatsapp_notif_wa_token"/>
                             <field name="send_message_whatsapp_notif_wa_test"/>
-                        </div>
+                      pwd  </div>
                     </div>
                 </div>
             </div>

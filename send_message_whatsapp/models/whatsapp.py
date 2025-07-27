@@ -24,26 +24,37 @@ class SendMessageWhatapp(models.Model):
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company.id)
     response_txt = fields.Text()
 
-    def get_notif_whatapp_size_cron_batch(self):
-        return int(self.env['ir.config_parameter'].get_param('send_message_whatsapp.notif_wa_size_cron_batch') or 10)
+    def is_module_installed_by_name(self, module_name):
+        module = self.env['ir.module.module'].search([('name', '=', module_name), ('state', '=', 'installed')], limit=1)
+        return bool(module)
+
+    def is_module_queue_job_installed(self, ):
+        return self.is_module_installed_by_name('queue_job')
+
+    def get_notif_whatapp_cron_batch_size(self):
+        return int(self.env['ir.config_parameter'].get_param('send_message_whatsapp.notif_wa_cron_batch_size') or 10)
 
     def get_notif_whatapp_throttling(self):
         return int(self.env['ir.config_parameter'].get_param('send_message_whatsapp.notif_wa_throttling') or 10)
 
     def get_whatsapp_queue(self):
-        return bool(self.env['ir.config_parameter'].get_param('send_message_whatsapp.using_queue'))
+        return self.is_module_queue_job_installed() and bool(
+            self.env['ir.config_parameter'].get_param('send_message_whatsapp.using_queue'))
 
     def get_active_send_wa_cron(self):
         return self.env['ir.config_parameter'].get_param('send_message_cron.active_send_wa_cron')
 
     def get_whatsapp_endpoint_url(self):
-        return os.getenv('SEND_MESSAGE_NOTIF_WA_ENDPOINT', None) or self.env['ir.config_parameter'].get_param('send_message_cron.api_send_wa')
+        return os.getenv('SEND_MESSAGE_NOTIF_WA_ENDPOINT', None) or self.env['ir.config_parameter'].get_param(
+            'send_message_cron.api_send_wa')
 
     def get_notif_whatapp_token(self):
-        return os.getenv('SEND_MESSAGE_NOTIF_WA_TOKEN', None) or self.env['ir.config_parameter'].get_param('notif_wa_token')
+        return os.getenv('SEND_MESSAGE_NOTIF_WA_TOKEN', None) or self.env['ir.config_parameter'].get_param(
+            'notif_wa_token')
 
     def get_notif_whatapp_test(self):
-        return os.getenv('SEND_MESSAGE_NOTIF_WA_TEST', None) or self.env['ir.config_parameter'].get_param('notif_wa_test')
+        return os.getenv('SEND_MESSAGE_NOTIF_WA_TEST', None) or self.env['ir.config_parameter'].get_param(
+            'notif_wa_test')
 
     def send_message_whatsapp(self, message, recipient, ref="No Ref", send_force=False):
         whatsapp = self.create([
@@ -56,14 +67,18 @@ class SendMessageWhatapp(models.Model):
         ]
         )[0]
         if send_force:
-            whatsapp._send_message_whatsapp()
+            whatsapp.send()
+        elif self.get_whatsapp_queue():
+            whatsapp.write({'state': 'queue'})
+            whatsapp.with_delay().send()
+
         return whatsapp.id
 
-    def _send_message_whatsapp(self):
+    def send(self):
         self.ensure_one()
         self.write({'state': 'queue'})
         try:
-            result = self.post_whatsapp_message({
+            result = self._send({
                 'message': self.message,
                 'recipient': self.recipient,
                 'ref': self.name,
@@ -78,18 +93,24 @@ class SendMessageWhatapp(models.Model):
     def cron_send_message_whatsapp(self):
         parameter = self.get_active_send_wa_cron()
         if parameter == 'True':
-            size_cron_batch = self.get_notif_whatapp_size_cron_batch()
-            whatsapps = self.search([('state', 'in', ['pending', 'requeue'])], order='id', limit=size_cron_batch)
+            batch_size = self.get_notif_whatapp_cron_batch_size()
+            whatsapps = self.search([('state', 'in', ['pending', 'requeue'])], order='id', limit=batch_size)
             for wa in whatsapps:
-                wa._send_message_whatsapp()
+                if self.get_whatsapp_queue():
+                    wa.with_delay().send()
+                else:
+                    wa.send()
 
-    def post_whatsapp_message(self, data_input):
+    def check_throttling(self):
+        notif_whatapp_throttling = self.get_notif_whatapp_throttling()
+        whatsapp_queue = self.get_whatsapp_queue()
+
+    def _send(self, data_input):
         url = self.get_whatsapp_endpoint_url()
         token = self.get_notif_whatapp_token()
         test_wa = self.get_notif_whatapp_test()
-        notif_whatapp_throttling = self.get_notif_whatapp_throttling()
-        whatsapp_queue = self.get_whatsapp_queue()
         if data_input:
+            self.check_throttling()
             data = dict(data_input)
             data['token'] = token
             recipient = data.get('recipient', '0')
