@@ -77,15 +77,18 @@ class ApprovalHrEmployeeMixin(models.AbstractModel):
 
     def get_approval_strategy_config(self):
         return {
-            'stage_hr_employee_id': ['approval.strategy.hr_employee.mixin', True]
+            'stage_hr_employee_id': {
+                'transaction_stage_field': 'stage_hr_employee_id',
+                'stage_strategy_name': 'Employee',
+                'stage_strategy_model_name': 'approval.strategy.hr_employee.mixin',
+                'stage_mandatory': True
+            }
         }
 
     def setup_approval_by_strategy(self):
         self._create__stage_hr_employee_id()
 
     def setup_approval_stage(self):
-        self.ensure_one()
-
         self.approval_tasks.setup_approval_task()
 
     def _update_stage(self,
@@ -97,13 +100,19 @@ class ApprovalHrEmployeeMixin(models.AbstractModel):
         approval_stage_id = data.id
         approval_stage_model_name = data._name
         strategy_config = self.env[config_model]
-        return strategy_config.edit_form(
-            transaction_stage_field=transaction_stage_field,
-            transaction_id=self.id,
-            transaction_model_name=self._name,
-            approval_stage_id=approval_stage_id,
-            approval_stage_model_name=approval_stage_model_name,
+        source = {
+            'description': self._description,
+            'transaction_id': self.id,
+            'transaction_model_name': self._name,
+            'approval_stage_id': approval_stage_id,
+            'approval_stage_model_name': approval_stage_model_name,
+            'name': self.name,
+            'requester_id': self.delegator_id.id,
+        }
+        source.update(
+            self.get_approval_strategy_config().get('stage_hr_employee_id', {})
         )
+        return strategy_config.edit_form(**source)
 
     def _create__stage_hr_employee_id(self, force_create=False):
         if self.stage_hr_employee_id and not force_create:
@@ -115,8 +124,10 @@ class ApprovalHrEmployeeMixin(models.AbstractModel):
             'transaction_model_name': self._name,
             'name': self.name,
             'requester_id': self.delegator_id.id,
-            'transaction_stage_field': 'stage_hr_employee_id',
         }
+        source.update(
+            self.get_approval_strategy_config().get('stage_hr_employee_id', {})
+        )
         context = dict(self.env.context or {})
         try:
             self.stage_hr_employee_id = self.env['approval.strategy.hr_employee.config'].with_context(
