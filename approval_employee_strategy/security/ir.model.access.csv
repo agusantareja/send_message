@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-
-approval_strategy_hr_employee_config,approval.strategy.hr_employee.config,model_approval_strategy_hr_employee_config,base.group_user,1,1,1,1

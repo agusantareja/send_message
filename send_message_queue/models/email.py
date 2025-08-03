@@ -5,6 +5,7 @@ import pytz
 import requests
 import logging
 import time
+from odoo.addons.queue_job.exception import FailedJobError, NoSuchJobError, RetryableJobError
 
 from odoo.addons.queue_job.job import job
 
@@ -116,7 +117,7 @@ class SendEmail(models.Model):
             for rec in self.env['send_message.email'].search([('is_send', '=', False)]):
                 if not rec.is_send_wa:
                     rec.with_delay().send_wa_queue()
-    @job
+    @job(retry_pattern={1: 5, 2: 10, 3: 20, 4: 30, 5: 60})
     def send_wa_queue(self):
         parameter = self.env['ir.config_parameter'].get_param('send_message_cron.active_send_wa_cron')
         if parameter == 'True':
@@ -156,7 +157,7 @@ class SendEmail(models.Model):
                     self._cr.commit()
                     self.failed_send_mail_message(self.id, "wa")
                     self.failed_send_wa_message("wa")
-                    raise e
+                    raise RetryableJobError("Error sending WhatsApp message: %s" % e)
 
     def post_wa_message(self, data_input):
         url = self.env['ir.config_parameter'].get_param('send_message_cron.api_send_wa')

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="user_delegate_sequence" model="ir.sequence">
+           <field name="name">User Delegate</field>
+           <field name="code">user.delegate</field>
+           <field name="active">True</field>
+           <field name="prefix">DOA-</field>
+           <field name="padding">6</field>
+           <field name="number_next">1</field>
+           <field name="number_increment">1</field>
+<!--           <field name="company_id"></field>-->
+        </record>
+
+
+    </data>
+</odoo>

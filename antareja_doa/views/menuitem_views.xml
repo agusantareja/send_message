@@ -1,0 +1,9 @@
+<odoo>
+    <menuitem id="menu_doa_root" name="Delegation of Authority" sequence="10"/>
+    <!-- Menu -->
+
+    <menuitem id="menu_user_delegate" name="User Delegation" parent="menu_doa_root"/>
+    <menuitem id="menu_user_delegate_rules" name="User Delegation Rules" parent="menu_user_delegate"
+              action="action_user_delegate"/>
+
+</odoo>

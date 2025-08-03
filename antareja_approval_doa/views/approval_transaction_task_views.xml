@@ -1,0 +1,36 @@
+<odoo>
+    <record id="view_approval_transaction_task_search" model="ir.ui.view">
+        <field name="name">approval.transaction.search</field>
+        <field name="model">approval.transaction.task</field>
+        <field name="inherit_id" ref="antareja_approval.view_approval_transaction_task_search"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//search" position="inside">
+                <filter string="Proxy Only" name="proxy_only" context="{'proxy_only': 1}"/>
+                <filter string="Direct Only" name="direct_approver" context="{'direct_only': 1}"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_approval_transaction_task_form_user_delegate" model="ir.ui.view">
+        <field name="name">approval.transaction.form</field>
+        <field name="model">approval.transaction.task</field>
+        <field name="inherit_id" ref="antareja_approval.view_approval_transaction_task_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='approval_task_execution']//field[@name='user_execution_id']" postion="after">
+                <field name="user_behalf_of_id" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_approval_transaction_task_tree_user_delegate" model="ir.ui.view">
+        <field name="name">approval.transaction.tree.user.delegate</field>
+        <field name="model">approval.transaction.task</field>
+        <field name="inherit_id" ref="antareja_approval.view_approval_transaction_task_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree//field[@name='user_execution_id']" postion="after">
+                <field name="user_behalf_of_id" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
