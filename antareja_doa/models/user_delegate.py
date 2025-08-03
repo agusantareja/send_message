@@ -299,16 +299,19 @@ class UserDelegate(models.Model):
             if need_clear and rec.proxy_id:
                 _logger.debug("Clearing cache for proxy_id=%s due to state/field change.", rec.proxy_id.id)
                 self.get_delegations_user_group_for_proxy.clear_cache(self, rec.proxy_id.id)
+
                 if rec.delegator_id:
-                    self.proxy_has_delegate_group.clear_cache(self, rec.proxy_id.id, rec.delegator_id.groups_id.id)
-                    if rec.delegator_id.company_ids:
-                        _logger.debug(
-                            "Clearing cache for proxy_id=%s, group_id=%s, company_id=%s",
-                            rec.proxy_id.id, rec.delegator_id.groups_id.id, rec.delegator_id.company_ids.id
-                        )
-                        self.proxy_has_delegate_group_company.clear_cache(
-                            self, rec.proxy_id.id, rec.delegator_id.groups_id.id, rec.delegator_id.company_ids.id
-                        )
+                    for group in rec.delegator_id.groups_id:
+                        self.proxy_has_delegate_group.clear_cache(self, rec.proxy_id.id, group.id)
+
+                        for company in rec.delegator_id.company_ids:
+                            _logger.debug(
+                                "Clearing cache for proxy_id=%s, group_id=%s, company_id=%s",
+                                rec.proxy_id.id, group.id, company.id
+                            )
+                            self.proxy_has_delegate_group_company.clear_cache(
+                                self, rec.proxy_id.id, group.id, company.id
+                            )
 
     def setup_number(self, vals):
         if vals.get('name', 'Draft') in ['Draft', 'New']:
@@ -335,7 +338,7 @@ class UserDelegate(models.Model):
                 self.flush()
             else:
                 return result
-        self._clear_proxy_cache_if_needed(old_vals)
+        # self._clear_proxy_cache_if_needed(old_vals)
         return result
 
     @api.model_create_multi
@@ -347,8 +350,8 @@ class UserDelegate(models.Model):
         records = super().create(new_vals_list)
 
         # Hapus cache hanya untuk yang state-nya langsung 'active'
-        active_records = records.filtered(lambda r: r.state == 'active')
-        active_records._clear_proxy_cache_if_needed()
+        # active_records = records.filtered(lambda r: r.state == 'active')
+        # active_records._clear_proxy_cache_if_needed()
         return records
 
     def unlink(self):

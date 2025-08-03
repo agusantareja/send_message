@@ -22,6 +22,7 @@
 
     # always loaded
     'data': [
+        'data/user_delegate_cron.xml',
         'data/user_delegate_sequence.xml',
         'security/ir.model.access.csv',
         'views/user_delegate_views.xml',

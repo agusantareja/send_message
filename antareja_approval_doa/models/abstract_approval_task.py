@@ -44,33 +44,28 @@ class AbstractApprovalTransaction(models.AbstractModel):
 
     def check_delegated_user(self):
         self.ensure_one()
-        if not self.access_approval:
-            if self.access_proxy_approval:
-                delegate = self.get_user_delegate()
-
-                if not delegate:
-                    raise ValidationError("Delegator not found.")
-                delegate = to_integer(delegate)
-                self.user_delegate_id = delegate
-                context = dict(self.env.context, __user_delegate_id=delegate)
-                self = self.with_user(delegate.delegator_id).with_context(context)
-            else:
-                raise ValidationError("You are not authorized to approve this transaction.")
-        else:
+        if self.access_direct_approval:
             self.user_delegate_id = None
+        elif self.access_proxy_approval:
+            delegate = self.get_user_delegate()
+            if not delegate:
+                raise ValidationError("Delegator not found.")
+            delegate = to_integer(delegate)
+            self.user_delegate_id = delegate
+            context = dict(self.env.context, __user_delegate_id=delegate)
+            self = self.with_user(self.user_delegate_id.delegator_id).with_context(context)
+        else:
+            raise ValidationError("You are not authorized to approve this transaction.")
         return self
 
-    def _approve_task(self, **kwargs):
+    def _approve_task(self):
         """Approve the transaction"""
         self = self.check_delegated_user()
-        self.ensure_one()
-        self.validate_before_approve_or_reject()
-        user_delegate_id = self.env.context.get('__user_delegate_id')
-        self.user_delegate_id = user_delegate_id
-        # Tandai status
-        self.status_approval = APPROVAL_STATUS_APPROVED
-        self.date_execution = fields.Datetime.now()
-        if user_delegate_id:
+        if self.user_delegate_id:
+            self.validate_before_approve_or_reject()
+            # Tandai status
+            self.status_approval = APPROVAL_STATUS_APPROVED
+            self.date_execution = fields.Datetime.now()
             delegator = self.user_delegate_id.delegator_id
             proxy_user = self.user_delegate_id.proxy_id
             self.user_execution_id = proxy_user.id
@@ -80,14 +75,9 @@ class AbstractApprovalTransaction(models.AbstractModel):
                 notes='Approve via proxy',
                 proxy_user_id=proxy_user.id,
             )
+            self.get_approval_stage_object().callback_approval_task_approved(self)
         else:
-            self.user_delegate_id = False
-            self.user_execution_id = self.env.user.id
-            self.create_audit_trial('approve', notes='Approve')
-
-        approval_stage_object = kwargs.get('approval_stage_object') or self.get_approval_stage_object()
-        kwargs['approval_stage_object'] = approval_stage_object
-        approval_stage_object.callback_approval_task_approved(self, **kwargs)
+            super(AbstractApprovalTransaction, self)._approve_task()
 
     def get_user_delegate(self, raise_exception=True):
         self.ensure_one()
@@ -110,29 +100,22 @@ class AbstractApprovalTransaction(models.AbstractModel):
             return self.env['user.delegate'].browse([])
 
     def _reject_task(self, **kwargs):
-        self = self.check_delegated_user()
         """Reject the transaction"""
-        self.validate_before_approve_or_reject()
-        self.status_approval = APPROVAL_STATUS_REJECTED
-        self.date_execution = fields.Datetime.now()
-        reject_reason = self.env.context.get('__reject_reason')
-        self.reason_approval = reject_reason
-        user_delegate_id = self.env.context.get('__user_delegate_id')
-        self.user_delegate_id = user_delegate_id
-        if user_delegate_id:
+        self_user = self.check_delegated_user()
+        if self.user_delegate_id:
+            self_user.validate_before_approve_or_reject()
+            self.status_approval = APPROVAL_STATUS_REJECTED
+            self.date_execution = fields.Datetime.now()
+            reject_reason = self.env.context.get('__reject_reason')
+            self.reason_approval = reject_reason
             delegator = self.user_delegate_id.delegator_id
             proxy_user = self.user_delegate_id.proxy_id
             self.user_execution_id = proxy_user.id
             self.user_behalf_of_id = delegator.id
             self.create_audit_trial('proxy_reject')
+            self.get_approval_stage_object().callback_approval_task_rejected(self)
         else:
-            self.user_delegate_id = False
-            self.user_execution_id = self.env.user.id
-            self.create_audit_trial('reject')
-
-        approval_stage_object = kwargs.get('approval_stage_object') or self.get_approval_stage_object()
-        kwargs['approval_stage_object'] = approval_stage_object
-        approval_stage_object.callback_approval_task_rejected(self, **kwargs)
+            super(AbstractApprovalTransaction, self)._reject_task( **kwargs)
 
     def prepare_dict_audit_trial(self):
         prepare_dict = super(AbstractApprovalTransaction, self).prepare_dict_audit_trial()

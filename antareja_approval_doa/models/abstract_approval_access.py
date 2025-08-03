@@ -99,14 +99,14 @@ class AbstractApprovalAccess(models.AbstractModel):
         delegated_group_ids = delegate.get('group_ids', [])
         user_delegations = delegate.get('user_delegate_ids', [])
         for rec in self:
-            rec.access_approval = False
+            rec.access_direct_approval = False
             rec.access_proxy_approval = False
 
             # Approver langsung
             if rec.type_approval == 'user' and rec.user_id.id == current_user.id:
-                rec.access_approval = True
+                rec.access_direct_approval = True
             elif rec.type_approval == 'group' and rec.group_id.id in current_user.groups_id.ids:
-                rec.access_approval = True
+                rec.access_direct_approval = True
 
             if user_delegations:
                 # Proxy approval
@@ -115,7 +115,7 @@ class AbstractApprovalAccess(models.AbstractModel):
                 elif rec.type_approval == 'group' and rec.group_id.id in delegated_group_ids:
                     rec.access_proxy_approval = True
 
-            rec.access_proxy_or_direct_approval = rec.access_approval or rec.access_proxy_approval
+            rec.access_proxy_or_direct_approval = rec.access_approval = rec.access_direct_approval or rec.access_proxy_approval
 
     def get_domain_for_current_user(self):
         proxy_only = self.env.context.get('proxy_only')

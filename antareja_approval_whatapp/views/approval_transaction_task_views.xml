@@ -16,7 +16,7 @@
         <field name="model">approval.transaction.task</field>
         <field name="inherit_id" ref="antareja_approval.view_approval_transaction_task_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook/page[@name='approval_task_execution']//field[@name='user_execution_id']" postion="after">
+            <xpath expr="//notebook/page[@name='approval_task_execution']//field[@name='user_execution_id']" position="after">
                 <field name="user_behalf_of_id" readonly="1"/>
             </xpath>
         </field>
@@ -27,7 +27,7 @@
         <field name="model">approval.transaction.task</field>
         <field name="inherit_id" ref="antareja_approval.view_approval_transaction_task_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//tree//field[@name='user_execution_id']" postion="after">
+            <xpath expr="//tree//field[@name='user_execution_id']" position="after">
                 <field name="user_behalf_of_id" readonly="1"/>
             </xpath>
         </field>
